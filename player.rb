@@ -1,19 +1,13 @@
 class Player
-  attr_reader :name, :cards
+  attr_reader :cards, :name
 
-  $aces = ['A♣', 'A♥', 'A♠', 'A♦']
-  $numbers = ['2♣', '2♥', '2♠', '2♦', '3♣', '3♥', '3♠', '3♦', '4♣', '4♥', '4♠', '4♦',
-            '5♣', '5♥', '5♠', '5♦', '6♣', '6♥', '6♠', '6♦', '7♣', '7♥', '7♠', '7♦',
-            '8♣', '8♥', '8♠', '8♦', '9♣', '9♥', '9♠', '9♦', '10♣', '10♥', '10♠', '10♦']
-
-  def initialize(name)
+  def initialize(name = 'Player')
     @name = name
     @cards = []
   end
 
   def cards_count
-    # return 0 if @cards.empty?
-    @cards.length
+    @cards.count
   end
 
   def add_card(card)
@@ -21,33 +15,22 @@ class Player
   end
 
   def show_cards
-    # return if @cards.empty?
-    @cards.join('  ')
+    @cards.map(&:show).join('  ')
   end
 
   def points
-    return 0 if @cards.empty?
+    @points = @cards.inject(0) { |sum, card| sum += card.point }
 
-    ace_count = @cards.select { |card| $aces.include?(card) }.count
-
-    cards_without_aces = @cards - $aces
-
-    return ace_count if cards_without_aces.empty?
-
-    points_without_aces = cards_without_aces.inject(0) { |sum, card| sum += $numbers.include?(card) ? card_to_number(card) : 10 }
-
-    return points_without_aces if ace_count == 0
-
-    if ace_count == 1 && points_without_aces + 11 <= 21
-      points_without_aces + 11
-    else
-      points_without_aces + ace_count
-    end
+    ace_point_change
   end
 
-  private 
+  protected
 
-  def card_to_number(card)
-    card.length == 2 ? card[0].to_i : 10
+  def ace_count
+    @cards.select { |card| card.rank == 'Ace' }.count
+  end
+
+  def ace_point_change
+    ( ace_count == 1 && @points <= 21 ) ? @points : ( @points - 10 * ace_count )
   end
 end

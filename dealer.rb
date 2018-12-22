@@ -1,10 +1,11 @@
+require_relative 'player'
+
 class Dealer < Player
-  def initialize
-    @cards = []
+  def initialize(name = 'Dealer')
+    super
   end
 
   def show_cards_hidden
-    # return if @cards.empty?
-    Array.new(self.cards_count) { |i| '*' }.join('  ')
+    self.cards.collect { '*' }.join(' ')
   end
 end
