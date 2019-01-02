@@ -1,5 +1,5 @@
 class Player
-  attr_reader :cards, :name
+  attr_reader :cards, :name, :points
 
   def initialize(name = 'Player')
     @name = name
@@ -10,16 +10,20 @@ class Player
     @cards.count
   end
 
-  def add_card(card)
+  def take_card(card)
     @cards << card
+
+    puts "    #{@name} took a card."
+
+    count_points
   end
 
   def show_cards
     @cards.map(&:show).join('  ')
   end
 
-  def points
-    @points = @cards.inject(0) { |sum, card| sum += card.point }
+  def count_points
+    @points = @cards.map(&:point).inject(:+)
 
     ace_point_change
   end

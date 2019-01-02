@@ -1,29 +1,24 @@
 require_relative 'card'
 
-class Deck < Card
+class Deck
   attr_reader :cards
 
-  def initialize
-    @cards = []
+  RANKS = %w[2 3 4 5 6 7 8 9 10 Jack Queen King Ace].freeze
+  SUITS = %w[♣ ♥ ♠ ♦].freeze
 
-    @@ranks.each do |rank|
-      @@suits.each do |suit|
-        @cards << Card.new(rank, suit)
-      end
-    end
+  def initialize
+    @cards = build_deck
   end
 
-  def shuffle
-    5.times @cards.shuffle!
+  def build_deck
+    RANKS.flat_map do |rank|
+      SUITS.collect do |suit|
+        Card.new(rank, suit)
+      end
+    end.shuffle!
   end
 
   def distribute
     @cards.pop
-  end
-
-  def take_back(player_cards)
-    player_cards.count.times do
-      @cards.push(player_cards.pop)
-    end
   end
 end

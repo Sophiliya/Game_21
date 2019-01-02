@@ -1,10 +1,5 @@
 class Card
-  include Enumerable
-
   attr_reader :rank, :suit
-
-  @@ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King', 'Ace']
-  @@suits = ['♣', '♥', '♠', '♦']
 
   def initialize(rank, suit)
     @rank = rank
