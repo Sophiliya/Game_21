@@ -1,22 +1,13 @@
 class Card
-  attr_reader :rank, :suit
+  attr_reader :name, :rank
 
   def initialize(rank, suit)
     @rank = rank
-    @suit = suit
+    @name = rank.to_s + suit
   end
 
   def point
-    if @rank == 'Ace'
-      11
-    elsif @rank.to_i == 0
-      10
-    else
-      @rank.to_i
-    end
-  end
-
-  def show
-    @rank + @suit
+    return 11 if @rank == 'Ace'
+    (2..10).to_a.include?(@rank.to_i) ? @rank.to_i : 10
   end
 end

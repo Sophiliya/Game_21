@@ -12,20 +12,15 @@ class Player
 
   def take_card(card)
     @cards << card
-
-    puts "    #{@name} took a card."
-
-    count_points
   end
 
   def show_cards
-    @cards.map(&:show).join('  ')
+    @cards.map(&:name).join('  ')
   end
 
   def count_points
-    @points = @cards.map(&:point).inject(:+)
-
-    ace_point_change
+    points_init = @cards.map(&:point).inject(:+)
+    @points = ace_point_change(points_init)
   end
 
   protected
@@ -34,7 +29,11 @@ class Player
     @cards.select { |card| card.rank == 'Ace' }.count
   end
 
-  def ace_point_change
-    ( ace_count == 1 && @points <= 21 ) ? @points : ( @points - 10 * ace_count )
+  def ace_point_change(points_init)
+    if ace_count == 1 && points_init <= 21
+      points_init
+    else
+      points_init -= 10 * ace_count 
+    end
   end
 end

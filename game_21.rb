@@ -6,13 +6,12 @@ require_relative 'user'
 class Game21
   def initialize
     @players = []
-    @dealer = Dealer.new
-    @players << @dealer
   end
 
   def start
     puts 'Hello!'
 
+    create_dealer
     create_user
 
     start_game
@@ -20,113 +19,103 @@ class Game21
 
   private
 
+  def create_dealer
+    @dealer = Dealer.new
+    @players << @dealer
+  end
+
   def create_user
-    puts 'Enter your name: '
-
-    @user = User.new(gets.chomp.strip)
-
+    @user = User.new(get_user_name)
     @players << @user
   end
 
+  def get_user_name
+    puts 'Enter your name:'
+    gets.chomp.strip
+  end
+
   def start_game
+    puts "Game started!"
+
+    create_deck
     card_distribution
 
-    puts 'Game started!'
+    show_to_user
 
-    @turn_of_player = @players.sample
+    @players.sample == @dealer ? dealer_action : user_action
+  end
 
-    loop do
-      @turn_of_player == @dealer ? dealer_action : user_action
-
-      break if stop?
-
-      show_to_user
-    end
-
-    stop_game
+  def create_deck
+    @deck = Deck.new
+    clear_player_cards
   end
 
   def card_distribution
-    @deck = Deck.new
-
     puts 'Card distribution:'
 
     2.times do
-      @user.take_card(@deck.distribute)
-      @dealer.take_card(@deck.distribute)
+      take_card(@dealer)
+      take_card(@user)
     end
-
-    show_to_user
   end
 
   def show_to_user
     puts "#{@dealer.name}'s cards: #{@dealer.show_cards_hidden}"
-    puts "#{@user.name}'s cards: #{@user.show_cards}, points: #{@user.points}"
+    puts "#{@user.name}'s cards: #{@user.show_cards}, points: #{@user.count_points}"
   end
 
   def dealer_action
-    puts "Dealer's turn."
+    puts " => Dealer's turn."
+    dealer_choice
+    show_to_user
 
-    dealer_choose_action
-
-    @turn_of_player = @user
+    give_turn_to(@user)
   end
 
-  def dealer_choose_action
+  def dealer_choice
     if @dealer.points < 15 && @dealer.cards_count < 3
-      @dealer.take_card(@deck.distribute)
+      take_card(@dealer)
     elsif @dealer.cards_count == 3 || @dealer.points > 18
       skip_turn(@dealer)
     else
-      random_action
+      [ skip_turn(@dealer), take_card(@dealer) ].sample
     end
   end
 
   def user_action
-    case user_choose
-    when 'Skip'
-      skip_turn(@user)
-    when 'Add card'
-      @user.take_card(@deck.distribute)
-    else
-      @stop_game = true
-    end
+    show_available_actions
+    user_choice = @actions[gets.chomp.strip.to_i - 1]
 
-    @turn_of_player = @dealer
+    return stop_game if user_choice == 'Show cards'
+    user_choice == 'Skip' ? skip_turn(@user) : take_card(@user)
+
+    show_to_user
+
+    give_turn_to(@dealer)
   end
 
-  def user_choose
-    show_user_actions
-    actions_list[gets.chomp.strip.to_i - 1]
-  end
+  def show_available_actions
+    puts ' => Your turn. Choose your action:'
 
-  def show_user_actions
-    puts 'Your turn. Choose your action:'
-    actions_list.each.with_index(1) { |action, index| puts "#{index}. #{action}" }
-  end
-
-  def random_action
-    action = ['skip', 'take'].sample
-
-    case action
-    when 'skip'
-      skip_turn(@dealer)
-    when 'take'
-      @dealer.take_card(@deck.distribute)
-    end
-  end
-
-  def actions_list
     @actions = ['Skip', 'Show cards']
     @user.cards_count < 3 ? @actions << 'Add card' : @actions
+    @actions.each.with_index(1) { |action, index| puts "#{index}. #{action}" }
+  end
+
+  def give_turn_to(player)
+    return stop_game if ( @dealer.cards_count == 3 && @user.cards_count == 3 )
+    player == @user ? user_action : dealer_action
+  end
+
+  def take_card(player)
+    player.take_card(@deck.distribute)
+    player.count_points
+
+    puts "    #{player.name} took a card."
   end
 
   def skip_turn(player)
     puts "    #{player.name} skipped his turn."
-  end
-
-  def stop?
-    @stop_game || (@dealer.cards_count == 3 && @user.cards_count == 3)
   end
 
   def stop_game
@@ -139,48 +128,46 @@ class Game21
   def results
     puts "Dealer's cards: #{@dealer.show_cards}, points: #{@dealer.points}"
     puts "Your cards: #{@user.show_cards}, points: #{@user.points}"
-    puts "Dead heat." if @user.points == @dealer.points
 
-    define_winner
+    show_winner
   end
 
-  def define_winner
-    if user_won?
+  def show_winner
+    players = @players.reject { |player| player.points > 21 }
+
+    return puts "Dead heat." if players.empty? || points_equal?
+
+    if players.max_by(&:points) == @user
       puts "Congratulations, #{@user.name}! You won!"
     else
       puts "Dealer won."
     end
   end
 
-  def user_won?
-    case_1 = @dealer.points < @user.points && @user.points <= 21
-    case_2 = @user.points <= 21 && @dealer.points > 21
-
-    case_1 || case_2
+  def points_equal?
+    @user.points == @dealer.points
   end
 
   def start_again?
-    case user_answer
-    when 1
-      clear_player_cards
-      start_game
-    when 2
-      return p 'Bye!'
-    else
-      return p 'Incorrect answer. Bye!'
-    end
+    answer_to_start == 1 ? start_game : end_game
   end
 
-  def user_answer
-    puts "#{@user.name}, do you want to play again?"
-    puts '1. Yes  2. No'
-
+  def answer_to_start
+    ask_to_start
     gets.chomp.strip.to_i
+  end
+
+  def ask_to_start
+    puts "#{@user.name}, do you want to play again?"
+    puts 'Enter the number:  1. Yes  2. No'
   end
 
   def clear_player_cards
     @user.cards.clear
     @dealer.cards.clear
-    @stop_game = false
+  end
+
+  def end_game
+    puts "Bye #{@user.name}!"
   end
 end

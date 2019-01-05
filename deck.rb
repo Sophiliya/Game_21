@@ -10,15 +10,17 @@ class Deck
     @cards = build_deck
   end
 
+  def distribute
+    @cards.pop
+  end
+
+  private
+
   def build_deck
     RANKS.flat_map do |rank|
       SUITS.collect do |suit|
         Card.new(rank, suit)
       end
     end.shuffle!
-  end
-
-  def distribute
-    @cards.pop
   end
 end
